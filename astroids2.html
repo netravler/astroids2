@@ -93,15 +93,31 @@
 
         const asteroids = [];
 
-        // Sound effects
-        const rocketSound = new Audio('https://example.com/rocket.mp3'); // Replace with actual rocket sound URL
-        const shootSound = new Audio('https://example.com/shoot.mp3'); // Replace with actual shoot sound URL
+        // Web Audio API for sound effects
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
 
-        function playSound(sound) {
-            if (sound) {
-                sound.currentTime = 0;
-                sound.play().catch(() => {}); // Catch errors if sound fails to play
-            }
+        function playRocketSound() {
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            oscillator.type = 'sawtooth'; // Rocket-like sound
+            oscillator.frequency.setValueAtTime(100, audioContext.currentTime); // Low frequency
+            gainNode.gain.setValueAtTime(0.1, audioContext.currentTime); // Lower volume
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            oscillator.start();
+            oscillator.stop(audioContext.currentTime + 0.1); // Short burst
+        }
+
+        function playLaserSound() {
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            oscillator.type = 'square'; // Laser-like sound
+            oscillator.frequency.setValueAtTime(800, audioContext.currentTime); // High frequency
+            gainNode.gain.setValueAtTime(0.1, audioContext.currentTime); // Lower volume
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            oscillator.start();
+            oscillator.stop(audioContext.currentTime + 0.1); // Short burst
         }
 
         function createAsteroid(size = Math.random() * 30 + 20, x = Math.random() * canvas.width, y = Math.random() * canvas.height) {
@@ -155,7 +171,7 @@
             if (keys.ArrowLeft) ship.angle -= 0.05;
             if (keys.ArrowRight) ship.angle += 0.05;
             if (keys.ArrowUp) {
-                playSound(rocketSound); // Play rocket sound when thrusting
+                playRocketSound(); // Play rocket sound
                 ship.speed += 0.1;
                 ship.speed = Math.min(ship.speed, 5);
             } else {
@@ -267,7 +283,7 @@
         document.addEventListener('keyup', e => {
             keys[e.code] = false;
             if (e.code === 'Space') {
-                playSound(shootSound); // Play shoot sound when firing
+                playLaserSound(); // Play laser sound
                 const bullet = {
                     x: ship.x + Math.cos(ship.angle) * 10,
                     y: ship.y + Math.sin(ship.angle) * 10,
