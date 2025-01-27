@@ -139,6 +139,8 @@
             ctx.save();
             ctx.translate(ship.x, ship.y);
             ctx.rotate(ship.angle);
+
+            // Draw the ship
             ctx.beginPath();
             ctx.moveTo(10, 0);
             ctx.lineTo(-10, -7);
@@ -146,6 +148,18 @@
             ctx.closePath();
             ctx.strokeStyle = 'white';
             ctx.stroke();
+
+            // Draw the flame if the ship is thrusting
+            if (keys.ArrowUp) {
+                ctx.beginPath();
+                ctx.moveTo(-10, -5);
+                ctx.lineTo(-15, 0);
+                ctx.lineTo(-10, 5);
+                ctx.closePath();
+                ctx.fillStyle = 'orange';
+                ctx.fill();
+            }
+
             ctx.restore();
         }
 
