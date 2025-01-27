@@ -80,7 +80,8 @@
             x: canvas.width / 2,
             y: canvas.height / 2,
             angle: 0,
-            speed: 0,
+            speedX: 0, // Horizontal speed
+            speedY: 0, // Vertical speed
             bullets: []
         };
 
@@ -182,18 +183,21 @@
         }
 
         function updateShip() {
+            // Rotate the ship
             if (keys.ArrowLeft) ship.angle -= 0.05;
             if (keys.ArrowRight) ship.angle += 0.05;
+
+            // Apply thrust in the direction the ship is facing
             if (keys.ArrowUp) {
                 playRocketSound(); // Play rocket sound
-                ship.speed += 0.1;
-                ship.speed = Math.min(ship.speed, 5);
-            } else {
-                ship.speed *= 0.99;
+                const thrust = 0.1; // Thrust strength
+                ship.speedX += Math.cos(ship.angle) * thrust;
+                ship.speedY += Math.sin(ship.angle) * thrust;
             }
 
-            ship.x += ship.speed * Math.cos(ship.angle);
-            ship.y += ship.speed * Math.sin(ship.angle);
+            // Update ship position based on speed
+            ship.x += ship.speedX;
+            ship.y += ship.speedY;
 
             // Wrap around screen edges
             if (ship.x < 0) ship.x = canvas.width;
@@ -266,7 +270,8 @@
             ship.x = canvas.width / 2;
             ship.y = canvas.height / 2;
             ship.angle = 0;
-            ship.speed = 0;
+            ship.speedX = 0;
+            ship.speedY = 0;
             ship.bullets = [];
             asteroids.length = 0;
             for (let i = 0; i < 10; i++) {
