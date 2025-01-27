@@ -93,11 +93,21 @@
 
         const asteroids = [];
 
-        function createAsteroid() {
-            const size = Math.random() * 30 + 20;
+        // Sound effects
+        const rocketSound = new Audio('https://example.com/rocket.mp3'); // Replace with actual rocket sound URL
+        const shootSound = new Audio('https://example.com/shoot.mp3'); // Replace with actual shoot sound URL
+
+        function playSound(sound) {
+            if (sound) {
+                sound.currentTime = 0;
+                sound.play().catch(() => {}); // Catch errors if sound fails to play
+            }
+        }
+
+        function createAsteroid(size = Math.random() * 30 + 20, x = Math.random() * canvas.width, y = Math.random() * canvas.height) {
             const asteroid = {
-                x: Math.random() * canvas.width,
-                y: Math.random() * canvas.height,
+                x,
+                y,
                 dx: (Math.random() - 0.5) * 2,
                 dy: (Math.random() - 0.5) * 2,
                 size
@@ -145,7 +155,7 @@
             if (keys.ArrowLeft) ship.angle -= 0.05;
             if (keys.ArrowRight) ship.angle += 0.05;
             if (keys.ArrowUp) {
-                playSound(rocketSound);
+                playSound(rocketSound); // Play rocket sound when thrusting
                 ship.speed += 0.1;
                 ship.speed = Math.min(ship.speed, 5);
             } else {
@@ -155,6 +165,7 @@
             ship.x += ship.speed * Math.cos(ship.angle);
             ship.y += ship.speed * Math.sin(ship.angle);
 
+            // Wrap around screen edges
             if (ship.x < 0) ship.x = canvas.width;
             if (ship.x > canvas.width) ship.x = 0;
             if (ship.y < 0) ship.y = canvas.height;
@@ -166,6 +177,7 @@
                 bullet.x += bullet.dx;
                 bullet.y += bullet.dy;
 
+                // Remove bullets that go off-screen
                 if (bullet.x < 0 || bullet.x > canvas.width || bullet.y < 0 || bullet.y > canvas.height) {
                     ship.bullets.splice(index, 1);
                 }
@@ -177,26 +189,37 @@
                 asteroid.x += asteroid.dx;
                 asteroid.y += asteroid.dy;
 
+                // Wrap around screen edges
                 if (asteroid.x < 0) asteroid.x = canvas.width;
                 if (asteroid.x > canvas.width) asteroid.x = 0;
                 if (asteroid.y < 0) asteroid.y = canvas.height;
                 if (asteroid.y > canvas.height) asteroid.y = 0;
 
+                // Check for collision with ship
                 const dx = asteroid.x - ship.x;
                 const dy = asteroid.y - ship.y;
                 if (Math.sqrt(dx * dx + dy * dy) < asteroid.size) {
                     endGame();
                 }
 
+                // Check for collision with bullets
                 ship.bullets.forEach((bullet, bIndex) => {
                     const dx = asteroid.x - bullet.x;
                     const dy = asteroid.y - bullet.y;
                     if (Math.sqrt(dx * dx + dy * dy) < asteroid.size) {
                         score += 10;
                         scoreElement.textContent = `Score: ${score}`;
-                        asteroids.splice(index, 1);
                         ship.bullets.splice(bIndex, 1);
-                        createAsteroid();
+
+                        // Break asteroid into smaller pieces if it's large enough
+                        if (asteroid.size > 15) {
+                            const numPieces = 2; // Number of smaller asteroids to create
+                            for (let i = 0; i < numPieces; i++) {
+                                createAsteroid(asteroid.size / 2, asteroid.x, asteroid.y);
+                            }
+                        }
+
+                        asteroids.splice(index, 1); // Remove the original asteroid
                     }
                 });
             });
@@ -224,15 +247,6 @@
             gameLoop();
         }
 
-        // Load sound effects
-        const rocketSound = new Audio('https://example.com/rocket.mp3');
-        const shootSound = new Audio('https://example.com/shoot.mp3');
-
-        function playSound(sound) {
-            sound.currentTime = 0;
-            sound.play();
-        }
-
         function gameLoop() {
             if (gameOver) return;
 
@@ -251,43 +265,22 @@
 
         document.addEventListener('keydown', e => keys[e.code] = true);
         document.addEventListener('keyup', e => {
-          keys[e.code] = false;
-          if (e.code === 'Space') {
-              playSound(shootSound);
-              const bullet = {
-                x: ship.x + Math.cos(ship.angle) * 10,
-                y: ship.y + Math.sin(ship.angle) * 10,
-                dx: Math.cos(ship.angle) * 5,
-                dy: Math.sin(ship.angle) * 5
-              };
-              ship.bullets.push(bullet);
-          }
+            keys[e.code] = false;
+            if (e.code === 'Space') {
+                playSound(shootSound); // Play shoot sound when firing
+                const bullet = {
+                    x: ship.x + Math.cos(ship.angle) * 10,
+                    y: ship.y + Math.sin(ship.angle) * 10,
+                    dx: Math.cos(ship.angle) * 5,
+                    dy: Math.sin(ship.angle) * 5
+                };
+                ship.bullets.push(bullet);
+            }
         });
 
+        restartButton.addEventListener('click', resetGame);
 
-    restartButton.addEventListener('click', resetGame);
-
-    gameLoop(); // Start the game loop
-    // Ensure the game starts fresh
-    function initializeGame() {
-        score = 0;
-        scoreElement.textContent = `Score: ${score}`;
-        ship.x = canvas.width / 2;
-        ship.y = canvas.height / 2;
-        ship.angle = 0;
-        ship.speed = 0;
-        ship.bullets = [];
-        asteroids.length = 0;
-        for (let i = 0; i < 10; i++) {
-            createAsteroid();
-        }
-        gameOver = false;
-        gameOverElement.style.display = 'none';
-        gameLoop(); // Start the game loop
-    }
-
-    restartButton.addEventListener('click', resetGame);
-
-    initializeGame(); // Initialize and start the game on load
-</script>
-
+        resetGame(); // Initialize and start the game on load
+    </script>
+</body>
+</html>
