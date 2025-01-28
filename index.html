@@ -39,7 +39,16 @@
             text-align: center;
         }
 
-        #restartButton {
+        #winner {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+
+        #restartButton, #newGameButton {
             margin-top: 20px;
             padding: 10px 20px;
             font-size: 16px;
@@ -50,7 +59,7 @@
             border-radius: 5px;
         }
 
-        #restartButton:hover {
+        #restartButton:hover, #newGameButton:hover {
             background-color: lightgray;
         }
     </style>
@@ -60,6 +69,10 @@
     <div id="gameOver">
         <h1>Game Over</h1>
         <button id="restartButton">Restart</button>
+    </div>
+    <div id="winner">
+        <h1>Winner!</h1>
+        <button id="newGameButton">New Game</button>
     </div>
     <canvas id="gameCanvas"></canvas>
     <script>
@@ -71,7 +84,9 @@
         let score = 0;
         const scoreElement = document.getElementById('score');
         const gameOverElement = document.getElementById('gameOver');
+        const winnerElement = document.getElementById('winner');
         const restartButton = document.getElementById('restartButton');
+        const newGameButton = document.getElementById('newGameButton');
 
         let gameOver = false;
 
@@ -258,6 +273,19 @@
                 if (bullet.x < 0 || bullet.x > canvas.width || bullet.y < 0 || bullet.y > canvas.height) {
                     ship.bullets.splice(index, 1);
                 }
+
+                // Check for collision with saucer
+                if (saucer.active) {
+                    const dx = bullet.x - saucer.x;
+                    const dy = bullet.y - saucer.y;
+                    if (Math.sqrt(dx * dx + dy * dy) < saucer.width / 2) {
+                        ship.bullets.splice(index, 1);
+                        saucer.active = false;
+                        clearInterval(saucer.beepInterval);
+                        score += 50; // Award points for destroying the saucer
+                        scoreElement.textContent = `Score: ${score}`;
+                    }
+                }
             });
 
             saucer.bullets.forEach((bullet, index) => {
@@ -342,6 +370,11 @@
                     }
                 }
             });
+
+            // Check if all asteroids are destroyed
+            if (asteroids.length === 0) {
+                winner();
+            }
         }
 
         function updateSaucer() {
@@ -399,6 +432,12 @@
             clearInterval(saucer.beepInterval); // Stop beeping
         }
 
+        function winner() {
+            gameOver = true;
+            winnerElement.style.display = 'block';
+            clearInterval(saucer.beepInterval); // Stop beeping
+        }
+
         function resetGame() {
             score = 0;
             scoreElement.textContent = `Score: ${score}`;
@@ -417,6 +456,7 @@
             clearInterval(saucer.beepInterval);
             gameOver = false;
             gameOverElement.style.display = 'none';
+            winnerElement.style.display = 'none';
             gameLoop();
         }
 
@@ -454,6 +494,7 @@
         });
 
         restartButton.addEventListener('click', resetGame);
+        newGameButton.addEventListener('click', resetGame);
 
         resetGame(); // Initialize and start the game on load
     </script>
